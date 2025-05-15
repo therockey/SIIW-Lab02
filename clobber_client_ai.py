@@ -6,8 +6,7 @@ import sys
 
 
 class ClobberAIClient:
-    def __init__(self, host='localhost', port=5555, depth=2, heuristic_module="heuristics.simple_heuristic",
-                 algorithm_module="algorithms.minmax"):
+    def __init__(self, host='localhost', port=5555, depth=2, heuristic_module="heuristics.heuristic1", algorithm_module="algorithms.minmax"):
         self.host = host
         self.port = port
         self.depth = depth
@@ -102,7 +101,7 @@ if __name__ == "__main__":
     parser.add_argument("--host", default="localhost")
     parser.add_argument("--port", type=int, default=5555)
     parser.add_argument("--depth", type=int, default=2)
-    parser.add_argument("--heuristic", default="heuristics.simple_heuristic")
+    parser.add_argument("--heuristic", default="heuristics.heuristic1")
     parser.add_argument("--algorithm", default="algorithms.minmax")
     args = parser.parse_args()
 
