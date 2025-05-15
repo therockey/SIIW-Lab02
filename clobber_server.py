@@ -1,9 +1,11 @@
 import socket
 import threading
 import json
+import gamelib
 
 BOARD_ROWS = 5
 BOARD_COLS = 5
+
 
 def create_initial_board():
     board = []
@@ -17,27 +19,6 @@ def create_initial_board():
         board.append(row)
     return board
 
-def get_valid_moves(board, player):
-    opponent = 'B' if player == 'W' else 'W'
-    directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
-    moves = []
-    for r in range(len(board)):
-        for c in range(len(board[0])):
-            if board[r][c] == player:
-                for dr, dc in directions:
-                    nr, nc = r + dr, c + dc
-                    if 0 <= nr < len(board) and 0 <= nc < len(board[0]):
-                        if board[nr][nc] == opponent:
-                            moves.append(((r, c), (nr, nc)))
-    return moves
-
-def apply_move(board, move, player):
-    from_r, from_c = move[0]
-    to_r, to_c = move[1]
-    new_board = [row[:] for row in board]
-    new_board[to_r][to_c] = player
-    new_board[from_r][from_c] = '.'
-    return new_board
 
 class ClobberServer:
     def __init__(self, host='localhost', port=5555):
@@ -106,7 +87,7 @@ class ClobberServer:
             current_conn = self.connections[self.current_player]
             opponent = 'B' if self.current_player == 'W' else 'W'
 
-            valid_moves = get_valid_moves(self.board, self.current_player)
+            valid_moves = gamelib.get_valid_moves(self.board, self.current_player)
             if not valid_moves:
                 self.game_over = True
                 self.send_state_to_all()
@@ -119,7 +100,7 @@ class ClobberServer:
                 print(f"Game over! Winner is {winner}")
                 break
 
-            self.send_to_player(self.current_player, { "type": "your_turn" })
+            self.send_to_player(self.current_player, {"type": "your_turn"})
 
             move_data = self.receive_from_player(self.current_player)
             if move_data is None:
@@ -129,7 +110,7 @@ class ClobberServer:
             if move_data['type'] == 'move':
                 move = (tuple(move_data['from']), tuple(move_data['to']))
                 if move in valid_moves:
-                    self.board = apply_move(self.board, move, self.current_player)
+                    self.board = gamelib.apply_move(self.board, move, self.current_player)
                     self.current_player = opponent
                     self.send_state_to_all()
                 else:
@@ -137,6 +118,7 @@ class ClobberServer:
                         "type": "invalid_move",
                         "reason": "Invalid move"
                     })
+
 
 if __name__ == "__main__":
     server = ClobberServer()

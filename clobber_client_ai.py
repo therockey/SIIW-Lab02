@@ -4,8 +4,10 @@ import argparse
 import importlib
 import sys
 
+
 class ClobberAIClient:
-    def __init__(self, host='localhost', port=5555, depth=2, heuristic_module="heuristics.simple_heuristic"):
+    def __init__(self, host='localhost', port=5555, depth=2, heuristic_module="heuristics.simple_heuristic",
+                 algorithm_module="algorithms.minmax"):
         self.host = host
         self.port = port
         self.depth = depth
@@ -18,6 +20,13 @@ class ClobberAIClient:
             self.heuristic = importlib.import_module(heuristic_module)
         except ModuleNotFoundError as e:
             print(f"Error loading heuristic module '{heuristic_module}': {e}")
+            sys.exit(1)
+
+        # Dynamically load the algorithm module
+        try:
+            self.algorithm = importlib.import_module(algorithm_module)
+        except ModuleNotFoundError as e:
+            print(f"Error loading algorithm module '{algorithm_module}': {e}")
             sys.exit(1)
 
     def connect(self):
@@ -73,7 +82,7 @@ class ClobberAIClient:
 
     def handle_turn(self):
         print("AI thinking...")
-        move = self.minimax_root(self.last_state, self.depth)
+        score, move = self.algorithm.evaluate(self.last_state['board'], self.depth, True, self.player, self.heuristic)
         if move:
             from_pos, to_pos = move
             self.send({
@@ -84,34 +93,9 @@ class ClobberAIClient:
         else:
             print("No valid move found.")
 
-    def minimax_root(self, state, depth):
-        moves = self.heuristic.get_valid_moves(state['board'], self.player)
-        best_score = float('-inf')
-        best_move = None
-        for move in moves:
-            new_board = self.heuristic.apply_move(state['board'], move, self.player)
-            score = self.minimax(new_board, depth - 1, False)
-            if score > best_score:
-                best_score = score
-                best_move = move
-        return best_move
-
-    def minimax(self, board, depth, is_maximizing):
-        current = self.player if is_maximizing else self.opponent()
-        moves = self.heuristic.get_valid_moves(board, current)
-        if depth == 0 or not moves:
-            return self.heuristic.evaluate_board(board, self.player)
-
-        scores = []
-        for move in moves:
-            new_board = self.heuristic.apply_move(board, move, current)
-            score = self.minimax(new_board, depth - 1, not is_maximizing)
-            scores.append(score)
-
-        return max(scores) if is_maximizing else min(scores)
-
     def opponent(self):
         return 'B' if self.player == 'W' else 'W'
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -119,13 +103,15 @@ if __name__ == "__main__":
     parser.add_argument("--port", type=int, default=5555)
     parser.add_argument("--depth", type=int, default=2)
     parser.add_argument("--heuristic", default="heuristics.simple_heuristic")
+    parser.add_argument("--algorithm", default="algorithms.minmax")
     args = parser.parse_args()
 
     client = ClobberAIClient(
         host=args.host,
         port=args.port,
         depth=args.depth,
-        heuristic_module=args.heuristic
+        heuristic_module=args.heuristic,
+        algorithm_module=args.algorithm
     )
     client.connect()
     client.run()

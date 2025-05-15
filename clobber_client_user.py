@@ -1,6 +1,7 @@
 import socket
 import json
 
+
 class ClobberUserClient:
     def __init__(self, host='localhost', port=5555):
         self.host = host
@@ -77,6 +78,7 @@ class ClobberUserClient:
                 else:
                     print(f"❌ You lose. You were {self.player}, winner was {winner}")
                 break
+
 
 if __name__ == "__main__":
     client = ClobberUserClient()
