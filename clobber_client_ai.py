@@ -3,6 +3,7 @@ import json
 import argparse
 import importlib
 import sys
+import time
 
 
 class ClobberAIClient:
@@ -14,6 +15,7 @@ class ClobberAIClient:
         self.player = None
         self.last_state = None
         self.total_nodes = 0
+        self.total_execution_time = 0
 
         # Dynamically load the heuristic module
         try:
@@ -75,14 +77,17 @@ class ClobberAIClient:
             elif msg_type == 'game_over':
                 winner = msg['winner']
                 if winner == self.player:
-                    print(f"✅ I won! (Player {self.player}, nodes visited: {self.total_nodes})")
+                    print(f"✅ I won! (Player {self.player}, nodes visited: {self.total_nodes}, total_execution_time: {self.total_execution_time*1000:.2f}ms)")
                 else:
-                    print(f"❌ I lost. I was {self.player}, winner was {winner}, nodes visited: {self.total_nodes}")
+                    print(f"❌ I lost. I was {self.player}, winner was {winner}, nodes visited: {self.total_nodes}, total_execution_time: {self.total_execution_time*1000:.2f}ms")
                 break
 
     def handle_turn(self):
         print("AI thinking...")
+        start = time.time()
         score, move, nodes_visited = self.algorithm.evaluate(self.last_state['board'], self.depth, True, self.player, self.heuristic)
+        end = time.time()
+        self.total_execution_time += (end - start)
         self.total_nodes += nodes_visited
         if move:
             from_pos, to_pos = move
