@@ -13,6 +13,7 @@ class ClobberAIClient:
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.player = None
         self.last_state = None
+        self.total_nodes = 0
 
         # Dynamically load the heuristic module
         try:
@@ -74,14 +75,15 @@ class ClobberAIClient:
             elif msg_type == 'game_over':
                 winner = msg['winner']
                 if winner == self.player:
-                    print(f"✅ I won! (Player {self.player})")
+                    print(f"✅ I won! (Player {self.player}, nodes visited: {self.total_nodes})")
                 else:
-                    print(f"❌ I lost. I was {self.player}, winner was {winner}")
+                    print(f"❌ I lost. I was {self.player}, winner was {winner}, nodes visited: {self.total_nodes}")
                 break
 
     def handle_turn(self):
         print("AI thinking...")
-        score, move = self.algorithm.evaluate(self.last_state['board'], self.depth, True, self.player, self.heuristic)
+        score, move, nodes_visited = self.algorithm.evaluate(self.last_state['board'], self.depth, True, self.player, self.heuristic)
+        self.total_nodes += nodes_visited
         if move:
             from_pos, to_pos = move
             self.send({
